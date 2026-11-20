@@ -2,136 +2,1243 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Química - 3º de Educación Secundaria - Balanceo de Ecuaciones Químicas</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>TuProfe20 Lab | 12 Ejercicios de Balanceo de Ecuaciones Químicas</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"/>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; margin: 0; padding: 28px; background: #f8fafc; }
-    .sheet { max-width: 860px; margin: 0 auto; background: #fff; padding: 34px 40px; border: 1px solid #cbd5e1; border-radius: 10px; }
-    header { text-align: center; border-bottom: 3px solid #1e3a8a; padding-bottom: 14px; margin-bottom: 22px; }
-    header h1 { margin: 0; font-size: 24px; color: #1e3a8a; text-transform: uppercase; letter-spacing: 1px; }
-    header h2 { margin: 4px 0; font-size: 17px; color: #334155; font-weight: 700; }
-    header h3 { margin: 6px 0 0; font-size: 19px; color: #0f766e; font-weight: 800; }
-    .meta { display: flex; justify-content: space-between; font-size: 13px; color: #475569; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
-    .card { border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; page-break-inside: avoid; }
-    .card-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; margin-bottom: 8px; }
-    .num { background: #1e3a8a; color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 700; }
-    .orig { font-size: 15px; color: #0f172a; }
-    .steps { margin: 6px 0 10px 18px; padding: 0; font-size: 13.5px; line-height: 1.5; }
-    .steps li { margin-bottom: 4px; }
-    .result { background: #ecfdf5; border-left: 4px solid #059669; padding: 6px 10px; font-size: 15px; color: #065f46; }
-    .print-bar { text-align: right; margin-bottom: 14px; }
-    .print-btn { background: #1e3a8a; color: #fff; border: none; padding: 9px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    @media print { body { background: #fff; padding: 0; } .sheet { border: none; padding: 10px; } .print-bar { display: none; } }
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap');
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #311068 45%, #0e7490 100%);
+      color: #0f172a;
+      user-select: none;
+    }
+    button, select { font-family: inherit; }
+
+    /* Capas de pizarra: #ink (permanente), #laser (resaltador 20% desvanecible 2s), #confetti */
+    #ink { position: fixed; inset: 0; z-index: 70; pointer-events: none; touch-action: none; }
+    #laser { position: fixed; inset: 0; z-index: 75; pointer-events: none; touch-action: none; }
+    #confetti { position: fixed; inset: 0; z-index: 85; pointer-events: none; }
+    .drawactive #ink { pointer-events: auto; cursor: crosshair; }
+    .hidden { display: none !important; }
+    .app { width: 100vw; height: 100dvh; position: relative; overflow: hidden; }
+
+    /* Burbujas químicas dinámicas */
+    .floaters { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .floaters span {
+      position: absolute; display: block; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.65), rgba(56,189,248,.18));
+      border: 1px solid rgba(255,255,255,.25);
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(105vh) scale(.8); opacity: 0; }
+      15% { opacity: .9; }
+      100% { transform: translateY(-15vh) scale(1.25); opacity: 0; }
+    }
+
+    .lab { position: absolute; inset: 0; padding: 10px 14px; display: flex; flex-direction: column; }
+
+    /* Barra superior siempre clickable encima del lienzo */
+    .labTop {
+      position: relative; z-index: 100;
+      width: min(98%, 1480px); margin: 0 auto 10px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    }
+    .titleGroup { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .brandpill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px;
+      border-radius: 15px; border: 2px solid rgba(244,114,182,.65);
+      background: linear-gradient(135deg, rgba(236,72,153,.3), rgba(99,102,241,.3));
+      backdrop-filter: blur(10px); color: #fff; font-size: 16px; font-weight: 900;
+      box-shadow: 0 8px 20px rgba(236,72,153,.25);
+    }
+    .modeSwitch {
+      display: inline-flex; background: rgba(15,23,42,.6); padding: 4px;
+      border-radius: 14px; border: 2px solid rgba(56,189,248,.45); gap: 4px;
+    }
+    .modeBtn {
+      border: none; padding: 6px 12px; border-radius: 10px; font-weight: 900; font-size: 13px;
+      cursor: pointer; color: #cbd5e1; background: transparent; transition: .2s;
+    }
+    .modeBtn.active {
+      background: linear-gradient(135deg, #f43f5e, #f97316); color: #fff;
+      box-shadow: 0 4px 12px rgba(244,63,94,.45);
+    }
+
+    /* Controles de la pizarra arriba a la derecha */
+    .toolbar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+      padding: 6px 8px; border-radius: 16px;
+      background: rgba(255,255,255,.96); border: 2px solid rgba(196,181,253,.9);
+      box-shadow: 0 10px 24px rgba(15,23,42,.35); backdrop-filter: blur(10px);
+    }
+    .toolbar .tbtn {
+      border: 2px solid #cbd5e1; border-radius: 10px; padding: 5px 9px;
+      background: #fff; color: #334155; font-weight: 900; cursor: pointer; font-size: 12.5px;
+      transition: .15s;
+    }
+    .toolbar .tbtn:hover { background: #f1f5f9; }
+    .toolbar .tbtn.active { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+    .palette { display: flex; align-items: center; gap: 4px; padding: 0 3px; }
+    .swatch {
+      width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff;
+      outline: 1px solid #94a3b8; cursor: pointer; transition: transform .15s;
+    }
+    .swatch:hover { transform: scale(1.12); }
+    .swatch.sel { outline: 3px solid #1e3a8a; transform: scale(1.1); }
+
+    /* Tablero principal */
+    .board {
+      position: relative; z-index: 1;
+      width: min(98%, 1480px); margin: 0 auto; flex: 1; min-height: 0;
+      background: #fff; border: 6px solid rgba(255,255,255,.94); border-radius: 28px;
+      box-shadow: 0 28px 65px rgba(0,0,0,.5); overflow: hidden; display: flex; flex-direction: column;
+    }
+    .boardHead {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #0f172a 100%);
+      color: #fff; border-bottom: 4px solid #ec4899; padding: 11px 18px;
+    }
+    .boardMeta {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 10px; margin-bottom: 6px; flex-wrap: wrap;
+    }
+    .badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .topBadge {
+      display: inline-block; padding: 4px 10px; border-radius: 9px;
+      font-size: 11.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+    }
+    .blockTag { background: linear-gradient(135deg, #f59e0b, #f97316); color: #fff; }
+    .typeTag { background: rgba(56,189,248,.22); border: 1px solid #38bdf8; color: #7dd3fc; }
+    .orderRule {
+      font-size: 11.5px; font-weight: 800; color: #fde047;
+      background: rgba(250,204,21,.12); border: 1px solid rgba(250,204,21,.35);
+      padding: 4px 10px; border-radius: 9px;
+    }
+
+    .navchips {
+      display: flex; align-items: center; gap: 5px; overflow: auto;
+      padding: 4px 7px; border-radius: 13px; background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .exchip {
+      position: relative; flex: 0 0 auto; width: 32px; height: 32px; border: none; border-radius: 9px;
+      background: rgba(255,255,255,.1); color: #e2e8f0; font-weight: 900; font-size: 13.5px;
+      cursor: pointer; transition: .2s;
+    }
+    .exchip:hover { background: rgba(255,255,255,.24); transform: translateY(-1px); }
+    .exchip.done { background: #10b981; color: #fff; }
+    .exchip.done::after {
+      content: '✓'; position: absolute; top: -4px; right: -4px; width: 14px; height: 14px;
+      background: #fef08a; color: #064e3b; font-size: 10px; border-radius: 50%;
+      display: grid; place-items: center; font-weight: 900;
+    }
+    .exchip.active {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff;
+      transform: scale(1.1); box-shadow: 0 0 14px rgba(236,72,153,.75);
+    }
+
+    .enunciado { text-align: center; }
+    .enunciadoSub { font-size: 13px; font-weight: 800; color: #c4b5fd; letter-spacing: .04em; text-transform: uppercase; }
+    #enunciadoEq { margin-top: 2px; font-size: clamp(22px, 2.3vw, 35px); color: #fde047; font-weight: 900; }
+
+    /* Cuerpo dividido estrictamente 50% - 50% */
+    .boardBody { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; background: #f8fafc; }
+    .half { min-width: 0; min-height: 0; display: flex; flex-direction: column; position: relative; }
+    .half.left { border-right: 3px solid #e2e8f0; }
+
+    .panelTitle {
+      padding: 10px 16px; border-bottom: 2px solid #e2e8f0;
+      background: linear-gradient(90deg, #ffffff, #f1f5f9);
+      color: #1e1b4b; font-size: clamp(15px, 1.4vw, 20px); font-weight: 900;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .panelTitle small {
+      font-size: 12.5px; color: #6366f1; background: #eef2ff;
+      padding: 4px 10px; border-radius: 999px; font-weight: 900;
+    }
+
+    /* Panel izquierdo: Pasos */
+    .stepsArea {
+      flex: 1; min-height: 0; overflow: auto; padding: 14px;
+      display: flex; flex-direction: column; gap: 11px;
+      background: radial-gradient(circle at center, rgba(99,102,241,.06) 2px, transparent 2px);
+      background-size: 22px 22px;
+    }
+    .emptyBox { flex: 1; display: grid; place-items: center; text-align: center; padding: 18px; }
+    .emptyCard {
+      background: #fff; border: 3px dashed #a855f7; border-radius: 22px;
+      padding: 22px 26px; max-width: 460px; box-shadow: 0 12px 28px rgba(168,85,247,.12);
+    }
+    .emptyCard strong { font-size: 22px; color: #4c1d95; display: block; margin-bottom: 8px; }
+    .emptyCard p { margin: 6px 0; color: #475569; font-weight: 700; font-size: 15px; line-height: 1.45; }
+
+    .step {
+      background: #fff; border: 2px solid #e2e8f0; border-radius: 18px;
+      padding: 13px 15px; box-shadow: 0 8px 18px rgba(15,23,42,.06);
+      animation: popIn .32s cubic-bezier(.22,1,.36,1) both;
+      transition: transform .2s, border-color .2s;
+    }
+    .step:hover { transform: translateX(3px); }
+    .step.current {
+      border: 3px solid #ec4899;
+      background: linear-gradient(135deg, #fdf2f8 0%, #ffffff 60%);
+      box-shadow: 0 10px 24px rgba(236,72,153,.16);
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(12px) scale(.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .stepHead { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+    .stepNum {
+      width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; font-weight: 900; font-size: 13px;
+    }
+    .focusPill {
+      padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 900;
+      color: #fff; background: #0ea5e9; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .stepWhy { color: #1e293b; font-size: 15px; font-weight: 800; line-height: 1.4; margin-bottom: 6px; }
+    .calcHint {
+      display: inline-block; background: #fef9c3; border: 1.5px solid #facc15;
+      color: #854d0e; font-size: 13px; font-weight: 900; padding: 4px 10px;
+      border-radius: 10px; margin-bottom: 7px;
+    }
+    .mathLine {
+      font-size: clamp(19px, 1.8vw, 28px); color: #0f172a;
+      background: #f8fafc; border-radius: 13px; padding: 5px 10px;
+      border: 1px solid #e2e8f0; overflow-x: auto;
+    }
+    .mathLine .katex-display { margin: .2em 0; }
+
+    .notice {
+      background: linear-gradient(135deg, #10b981, #059669); color: #fff;
+      border-radius: 16px; padding: 13px 16px; font-weight: 900; text-align: center;
+      font-size: 15px; box-shadow: 0 10px 24px rgba(16,185,129,.35);
+      animation: popIn .35s ease both;
+    }
+
+    /* Modo Práctica interactivo */
+    .practiceWrap {
+      flex: 1; display: flex; flex-direction: column; justify-content: center;
+      align-items: center; gap: 16px; padding: 16px; text-align: center;
+    }
+    .practiceEq {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 8px; background: #fff; padding: 18px 14px; border-radius: 22px;
+      border: 3px solid #8b5cf6; box-shadow: 0 14px 30px rgba(139,92,246,.16);
+      width: 100%;
+    }
+    .termBox {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #f5f3ff; border: 2px solid #ddd6fe; border-radius: 15px; padding: 7px 9px;
+      transition: transform .15s, border-color .15s;
+    }
+    .termBox:hover { border-color: #a855f7; transform: translateY(-2px); }
+    .coefCtrl { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .cBtn {
+      width: 26px; height: 22px; border: none; border-radius: 7px;
+      background: #7c3aed; color: #fff; font-weight: 900; font-size: 14px;
+      cursor: pointer; line-height: 1; transition: .15s;
+    }
+    .cBtn:hover { background: #ec4899; transform: scale(1.1); }
+    .cVal { font-size: 22px; font-weight: 900; color: #db2777; min-width: 24px; text-align: center; }
+    .chemFormula { font-size: clamp(18px, 1.8vw, 25px); font-weight: 900; color: #1e1b4b; }
+    .chemOp { font-size: 24px; font-weight: 900; color: #0ea5e9; padding: 0 2px; }
+    .practiceTip {
+      background: #eff6ff; border: 2px solid #93c5fd; color: #1e40af;
+      padding: 11px 15px; border-radius: 15px; font-weight: 800; font-size: 14.5px; max-width: 500px;
+    }
+
+    /* Panel derecho: Balanza + Inventario interactivo */
+    .graphWrap { flex: 1; min-height: 0; padding: 12px 15px; display: flex; flex-direction: column; gap: 10px; }
+    .scaleBox {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      border-radius: 18px; padding: 10px 14px; color: #fff;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      box-shadow: 0 10px 22px rgba(30,27,75,.2);
+    }
+    .scaleSvgWrap { flex: 0 0 155px; height: 72px; display: flex; align-items: center; justify-content: center; }
+    .scaleBeam { transform-origin: 80px 34px; transition: transform .55s cubic-bezier(.34,1.56,.64,1); }
+    .scaleStatus { flex: 1; }
+    .scaleStatus strong { display: block; font-size: 15.5px; color: #fde047; }
+    .scaleStatus span { font-size: 13px; color: #e2e8f0; font-weight: 700; }
+
+    .invTableWrap {
+      flex: 1; min-height: 0; overflow: auto; background: #fff;
+      border-radius: 18px; border: 2px solid #e2e8f0;
+    }
+    .invTable { width: 100%; border-collapse: collapse; text-align: center; }
+    .invTable th {
+      background: #f1f5f9; padding: 9px 6px; font-weight: 900; color: #334155;
+      border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; font-size: 12.5px;
+      text-transform: uppercase; letter-spacing: .05em; z-index: 2;
+    }
+    .invTable td {
+      padding: 9px 6px; border-bottom: 1px solid #e2e8f0; font-weight: 800; vertical-align: middle;
+      transition: background .25s;
+    }
+    .invTable tbody tr { cursor: pointer; transition: transform .15s; }
+    .invTable tbody tr:hover { background: #f8fafc; }
+    .invTable tr.focusRow {
+      background: #fef9c3 !important;
+      outline: 2.5px solid #f59e0b;
+      outline-offset: -2px;
+    }
+    .elemBadge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; border-radius: 13px; color: #fff;
+      font-weight: 900; font-size: 17px; box-shadow: 0 4px 10px rgba(0,0,0,.18);
+    }
+    .countCell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .countNum { font-size: 19px; font-weight: 900; display: inline-block; }
+    .countNum.bump { animation: numBump .45s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes numBump {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.45); color: #7c3aed; }
+      100% { transform: scale(1); }
+    }
+    .tdDiff .countNum { color: #e11d48; }
+    .tdMatch .countNum { color: #059669; }
+    .tdDiff { background: #fff1f2; }
+    .tdMatch { background: #ecfdf5; }
+    .dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 96px; }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      box-shadow: inset -2px -2px 3px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.2);
+      animation: dotPop .25s ease both;
+    }
+    @keyframes dotPop { from { transform: scale(0); } to { transform: scale(1); } }
+    .statusPill { display: inline-block; padding: 4px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 900; }
+    .stOk { background: #dcfce7; color: #166534; }
+    .stNo { background: #ffe4e6; color: #be123c; }
+
+    /* Controles inferiores */
+    .controls {
+      padding: 9px 16px; border-top: 2px solid #e2e8f0; background: #fff;
+      display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    }
+    .group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ctrl {
+      border: none; border-radius: 13px; padding: 9px 14px; font-size: 13.5px;
+      font-weight: 900; cursor: pointer; transition: .18s;
+      box-shadow: 0 4px 0 rgba(15,23,42,.15);
+    }
+    .ctrl:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
+    .ctrl:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
+    .ctrl.main { background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; }
+    .ctrl.alt { background: #fff; color: #334155; border: 2px solid #cbd5e1; }
+    .ctrl.gold { background: linear-gradient(135deg, #facc15, #f59e0b); color: #451a03; }
+    .ctrl.download {
+      background: linear-gradient(135deg, #10b981, #0ea5e9); color: #fff;
+      animation: pulseGlow 1.8s infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,.55); }
+      50% { box-shadow: 0 0 0 10px rgba(16,185,129,0); }
+    }
+    .progressShell { width: 130px; height: 12px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .progressBar {
+      height: 100%; background: linear-gradient(90deg, #ec4899, #8b5cf6, #06b6d4);
+      width: 0%; transition: width .3s ease;
+    }
+    .doneCounter {
+      background: #f1f5f9; border: 2px solid #cbd5e1; color: #1e1b4b;
+      padding: 6px 12px; border-radius: 12px; font-size: 13px; font-weight: 900;
+    }
+    .doneCounter.allDone { background: #dcfce7; border-color: #10b981; color: #065f46; }
+
+    @media (max-width: 920px) {
+      .boardBody { grid-template-columns: 1fr; overflow: auto; }
+      .half.left { border-right: none; border-bottom: 3px solid #e2e8f0; min-height: 280px; }
+    }
   </style>
 </head>
 <body>
-  <div class="sheet">
-    <div class="print-bar"><button class="print-btn" onclick="window.print()">🖨 Imprimir / Guardar como PDF</button></div>
-    <header>
-      <h1>Química</h1>
-      <h2>3º de Educación Secundaria</h2>
-      <h3>Balanceo de Ecuaciones Químicas</h3>
-    </header>
-    <div class="meta">
-      <span><strong>Estudiante:</strong> ________________________________________</span>
-      <span><strong>Método:</strong> Tanteo (12 ejercicios)</span>
+<canvas id="ink"></canvas>
+<canvas id="laser"></canvas>
+<canvas id="confetti"></canvas>
+
+<div class="app">
+  <div class="floaters" id="floaters"></div>
+  <section class="lab">
+    <!-- Barra superior: Título + Modo + Controles de Pizarra en el extremo derecho -->
+    <div class="labTop">
+      <div class="titleGroup">
+        <span class="brandpill">🧪 12 Ejercicios de Balanceo de Ecuaciones Químicas</span>
+        <div class="modeSwitch">
+          <button class="modeBtn active" id="btnGuided">📖 Paso a Paso</button>
+          <button class="modeBtn" id="btnPractice">🎮 ¡Pruébalo tú!</button>
+        </div>
+      </div>
+
+      <nav class="toolbar" aria-label="Pizarra activa">
+        <button class="tbtn active" data-tool="select">☝ Selector</button>
+        <button class="tbtn" data-tool="pen" title="Mantén Shift para línea recta">✏ Lápiz</button>
+        <button class="tbtn" data-tool="marker" title="Trazo grueso al 20% de opacidad que desaparece en 2 segundos">🖍 Resaltador</button>
+        <button class="tbtn" data-tool="line">📐 Línea</button>
+        <button class="tbtn" data-tool="erase">◻ Borrador</button>
+        <div class="palette">
+          <button class="swatch sel" data-color="#ef4444" style="background:#ef4444" title="Rojo"></button>
+          <button class="swatch" data-color="#2563eb" style="background:#2563eb" title="Azul"></button>
+          <button class="swatch" data-color="#16a34a" style="background:#16a34a" title="Verde"></button>
+          <button class="swatch" data-color="#facc15" style="background:#facc15" title="Amarillo"></button>
+          <button class="swatch" data-color="#9333ea" style="background:#9333ea" title="Morado"></button>
+        </div>
+        <button class="tbtn" id="undoInk" title="Deshacer">↩</button>
+        <button class="tbtn" id="clearInk" title="Limpiar pizarra">🗑</button>
+      </nav>
     </div>
-    
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 1</span>
-          <span class="orig">Ecuación inicial: <strong>H₂ + O₂ → H₂O</strong></span>
+
+    <div class="board">
+      <div class="boardHead">
+        <div class="boardMeta">
+          <div class="badges">
+            <span class="topBadge blockTag">MÉTODO DE TANTEO</span>
+            <span class="topBadge typeTag" id="currentTag"></span>
+            <span class="orderRule">Orden sugerido: Metal → No Metal → H → O</span>
+          </div>
+          <div class="navchips" id="navChips"></div>
         </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> Empezamos por el Oxígeno: hay 2 en reactivos y 1 en productos. Colocamos un 2 delante del H₂O. <em>(Productos: 2 × 1 = 2 O  |  2 × 2 = 4 H)</em></li><li><strong>Paso 2:</strong> Ahora el Hidrógeno tiene 4 en productos y 2 en reactivos. Colocamos un 2 delante del H₂. <em>(Reactivos: 2 × 2 = 4 átomos de H)</em></li><li><strong>Paso 3:</strong> ¡Comprobamos el inventario! Tanto H como O coinciden en ambos lados. <em>(H: 4 = 4  |  O: 2 = 2)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>2H₂ + O₂ → 2H₂O</strong></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 2</span>
-          <span class="orig">Ecuación inicial: <strong>N₂ + H₂ → NH₃</strong></span>
+        <div class="enunciado">
+          <div class="enunciadoSub">Balancea la siguiente ecuación química</div>
+          <div id="enunciadoEq"></div>
         </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> Primero el No Metal (Nitrógeno): hay 2 en reactivos y 1 en productos. Ponemos un 2 al NH₃. <em>(Productos: 2 × 1 = 2 N  |  2 × 3 = 6 H)</em></li><li><strong>Paso 2:</strong> Tenemos 6 Hidrógenos en productos. Ponemos un 3 al H₂ en reactivos (3 × 2 = 6). <em>(Reactivos: 3 × 2 = 6 átomos de H)</em></li><li><strong>Paso 3:</strong> Verificación final: síntesis del amoníaco balanceada. <em>(N: 2 = 2  |  H: 6 = 6)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>N₂ + 3H₂ → 2NH₃</strong></div>
       </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 3</span>
-          <span class="orig">Ecuación inicial: <strong>CH₄ + O₂ → CO₂ + H₂O</strong></span>
+
+      <!-- 50% Izquierda / 50% Derecha -->
+      <div class="boardBody">
+        <div class="half left">
+          <div class="panelTitle">
+            <span id="leftTitle">✍️ Resolución paso a paso</span>
+            <small id="stepMeta">0 de 0 pasos</small>
+          </div>
+          <div class="stepsArea" id="stepsArea"></div>
         </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> El Carbono ya está igualado (1 = 1). Para igualar los 4 Hidrógenos, ponemos un 2 al H₂O. <em>(Productos: 2 × 2 = 4 H  |  O totales: 2 + 2 = 4 O)</em></li><li><strong>Paso 2:</strong> Al final el Oxígeno: hay 4 en productos y 2 en reactivos. Ponemos un 2 al O₂. <em>(Reactivos: 2 × 2 = 4 átomos de O)</em></li><li><strong>Paso 3:</strong> ¡Combustión del metano balanceada correctamente! <em>(C: 1 = 1  |  H: 4 = 4  |  O: 4 = 4)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>CH₄ + 2O₂ → CO₂ + 2H₂O</strong></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 4</span>
-          <span class="orig">Ecuación inicial: <strong>Al + O₂ → Al₂O₃</strong></span>
+
+        <div class="half right">
+          <div class="panelTitle">
+            <span>⚖️ Balanza e Inventario</span>
+            <small>Reactivos vs Productos</small>
+          </div>
+          <div class="graphWrap">
+            <div class="scaleBox">
+              <div class="scaleSvgWrap" id="scaleSvg"></div>
+              <div class="scaleStatus">
+                <strong id="graphTitle">Analizando átomos...</strong>
+                <span id="graphTip">Haz clic en cualquier fila para resaltar el elemento.</span>
+              </div>
+            </div>
+            <div class="invTableWrap" id="graphBox"></div>
+          </div>
         </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> El Oxígeno tiene subíndices 2 y 3 (m.c.m. = 6). Ponemos 3 al O₂ y 2 al Al₂O₃. <em>(O: 3 × 2 = 6 en reactivos  |  2 × 3 = 6 en productos)</em></li><li><strong>Paso 2:</strong> Ahora el Aluminio tiene 2 × 2 = 4 en productos. Ponemos un 4 al Al en reactivos. <em>(Reactivos: 4 × 1 = 4 átomos de Al)</em></li><li><strong>Paso 3:</strong> ¡Formación del óxido de aluminio equilibrada! <em>(Al: 4 = 4  |  O: 6 = 6)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>4Al + 3O₂ → 2Al₂O₃</strong></div>
       </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 5</span>
-          <span class="orig">Ecuación inicial: <strong>Fe + HCl → FeCl₃ + H₂</strong></span>
+
+      <div class="controls">
+        <div class="group" id="guidedControls">
+          <button class="ctrl alt" id="prevStep">↶ Anterior</button>
+          <button class="ctrl main" id="nextStep">Siguiente paso ▶</button>
+          <button class="ctrl gold" id="solveAll">Resolver todo ★</button>
+          <button class="ctrl alt" id="restart">↻ Reiniciar</button>
         </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> Cloro aparece de 3 en 3 (FeCl₃) e Hidrógeno de 2 en 2 (H₂). Su m.c.m. es 6 → ponemos 6 al HCl. <em>(Reactivos: 6 H y 6 Cl disponibles)</em></li><li><strong>Paso 2:</strong> Igualamos Cloro e Hidrógeno en productos: 2 al FeCl₃ y 3 al H₂. <em>(Productos: 2 Fe, 6 Cl, 6 H)</em></li><li><strong>Paso 3:</strong> Finalmente igualamos el Hierro: ponemos 2 al Fe en reactivos. <em>(Reactivos: 2 × 1 = 2 átomos de Fe)</em></li><li><strong>Paso 4:</strong> ¡Ecuación completamente balanceada! <em>(Fe: 2 = 2  |  Cl: 6 = 6  |  H: 6 = 6)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>2Fe + 6HCl → 2FeCl₃ + 3H₂</strong></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 6</span>
-          <span class="orig">Ecuación inicial: <strong>KClO₃ → KCl + O₂</strong></span>
+        <div class="group">
+          <div class="progressShell" id="progressShell"><div class="progressBar" id="progressBar"></div></div>
+          <strong id="progressTxt" style="color:#1e1b4b; font-size:13.5px; font-weight:900;">0 / 0</strong>
+          <span class="doneCounter" id="doneCounter">Completados: 0 / 12</span>
+          <button class="ctrl download hidden" id="downloadBtn">📥 Descargar Ficha PDF</button>
         </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> El Oxígeno tiene subíndices 3 y 2 (m.c.m. = 6). Cruzamos: 2 al KClO₃ y 3 al O₂. <em>(O: 2 × 3 = 6 en reactivos  |  3 × 2 = 6 en productos)</em></li><li><strong>Paso 2:</strong> El 2 delante de KClO₃ duplicó al Potasio y al Cloro. Ponemos 2 al KCl. <em>(Productos: 2 K y 2 Cl)</em></li><li><strong>Paso 3:</strong> ¡Descomposición del clorato de potasio balanceada! <em>(K: 2 = 2  |  Cl: 2 = 2  |  O: 6 = 6)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>2KClO₃ → 2KCl + 3O₂</strong></div>
       </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 7</span>
-          <span class="orig">Ecuación inicial: <strong>C₃H₈ + O₂ → CO₂ + H₂O</strong></span>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let currentEx = 0;
+let revealed = 0;
+let mode = 'guided';
+let userCoefs = [];
+let completedSet = new Set();
+let prevCountsMap = {};
+let manualFocus = null;
+
+const ELEM_COLORS = {
+  H: '#06b6d4', O: '#f43f5e', N: '#3b82f6', C: '#6366f1',
+  Al: '#14b8a6', Fe: '#f97316', Cl: '#84cc16', K: '#ec4899',
+  Na: '#a855f7', S: '#eab308', Ca: '#0284c7', P: '#d946ef'
+};
+
+const EXERCISES = [
+  {
+    num: 'Ejercicio 1', eq: '\\mathrm{H_2 + O_2 \\rightarrow H_2O}',
+    eqPlain: 'H₂ + O₂ → H₂O', finalPlain: '2H₂ + O₂ → 2H₂O',
+    reactants: [{ f: 'H_2', atoms: { H: 2 } }, { f: 'O_2', atoms: { O: 2 } }],
+    products:  [{ f: 'H_2O', atoms: { H: 2, O: 1 } }],
+    elements: ['H', 'O'],
+    steps: [
+      { focus: 'O', why: 'Empezamos por el Oxígeno: hay 2 en reactivos y 1 en productos. Colocamos un 2 delante del H₂O.', calc: 'Productos: 2 × 1 = 2 O  |  2 × 2 = 4 H', math: '\\mathrm{H_2 + O_2 \\rightarrow \\color{#db2777}{\\mathbf{2}}H_2O}', coefs: [1, 1, 2] },
+      { focus: 'H', why: 'Ahora el Hidrógeno tiene 4 en productos y 2 en reactivos. Colocamos un 2 delante del H₂.', calc: 'Reactivos: 2 × 2 = 4 átomos de H', math: '\\mathrm{\\color{#db2777}{\\mathbf{2}}H_2 + O_2 \\rightarrow 2H_2O}', coefs: [2, 1, 2] },
+      { focus: null, why: '¡Comprobamos el inventario! Tanto H como O coinciden en ambos lados.', calc: 'H: 4 = 4  |  O: 2 = 2', math: '\\boxed{\\mathrm{2H_2 + O_2 \\rightarrow 2H_2O}}', coefs: [2, 1, 2] }
+    ]
+  },
+  {
+    num: 'Ejercicio 2', eq: '\\mathrm{N_2 + H_2 \\rightarrow NH_3}',
+    eqPlain: 'N₂ + H₂ → NH₃', finalPlain: 'N₂ + 3H₂ → 2NH₃',
+    reactants: [{ f: 'N_2', atoms: { N: 2 } }, { f: 'H_2', atoms: { H: 2 } }],
+    products:  [{ f: 'NH_3', atoms: { N: 1, H: 3 } }],
+    elements: ['N', 'H'],
+    steps: [
+      { focus: 'N', why: 'Primero el No Metal (Nitrógeno): hay 2 en reactivos y 1 en productos. Ponemos un 2 al NH₃.', calc: 'Productos: 2 × 1 = 2 N  |  2 × 3 = 6 H', math: '\\mathrm{N_2 + H_2 \\rightarrow \\color{#db2777}{\\mathbf{2}}NH_3}', coefs: [1, 1, 2] },
+      { focus: 'H', why: 'Tenemos 6 Hidrógenos en productos. Ponemos un 3 al H₂ en reactivos (3 × 2 = 6).', calc: 'Reactivos: 3 × 2 = 6 átomos de H', math: '\\mathrm{N_2 + \\color{#db2777}{\\mathbf{3}}H_2 \\rightarrow 2NH_3}', coefs: [1, 3, 2] },
+      { focus: null, why: 'Verificación final: síntesis del amoníaco balanceada.', calc: 'N: 2 = 2  |  H: 6 = 6', math: '\\boxed{\\mathrm{N_2 + 3H_2 \\rightarrow 2NH_3}}', coefs: [1, 3, 2] }
+    ]
+  },
+  {
+    num: 'Ejercicio 3', eq: '\\mathrm{CH_4 + O_2 \\rightarrow CO_2 + H_2O}',
+    eqPlain: 'CH₄ + O₂ → CO₂ + H₂O', finalPlain: 'CH₄ + 2O₂ → CO₂ + 2H₂O',
+    reactants: [{ f: 'CH_4', atoms: { C: 1, H: 4 } }, { f: 'O_2', atoms: { O: 2 } }],
+    products:  [{ f: 'CO_2', atoms: { C: 1, O: 2 } }, { f: 'H_2O', atoms: { H: 2, O: 1 } }],
+    elements: ['C', 'H', 'O'],
+    steps: [
+      { focus: 'H', why: 'El Carbono ya está igualado (1 = 1). Para igualar los 4 Hidrógenos, ponemos un 2 al H₂O.', calc: 'Productos: 2 × 2 = 4 H  |  O totales: 2 + 2 = 4 O', math: '\\mathrm{CH_4 + O_2 \\rightarrow CO_2 + \\color{#db2777}{\\mathbf{2}}H_2O}', coefs: [1, 1, 1, 2] },
+      { focus: 'O', why: 'Al final el Oxígeno: hay 4 en productos y 2 en reactivos. Ponemos un 2 al O₂.', calc: 'Reactivos: 2 × 2 = 4 átomos de O', math: '\\mathrm{CH_4 + \\color{#db2777}{\\mathbf{2}}O_2 \\rightarrow CO_2 + 2H_2O}', coefs: [1, 2, 1, 2] },
+      { focus: null, why: '¡Combustión del metano balanceada correctamente!', calc: 'C: 1 = 1  |  H: 4 = 4  |  O: 4 = 4', math: '\\boxed{\\mathrm{CH_4 + 2O_2 \\rightarrow CO_2 + 2H_2O}}', coefs: [1, 2, 1, 2] }
+    ]
+  },
+  {
+    num: 'Ejercicio 4', eq: '\\mathrm{Al + O_2 \\rightarrow Al_2O_3}',
+    eqPlain: 'Al + O₂ → Al₂O₃', finalPlain: '4Al + 3O₂ → 2Al₂O₃',
+    reactants: [{ f: 'Al', atoms: { Al: 1 } }, { f: 'O_2', atoms: { O: 2 } }],
+    products:  [{ f: 'Al_2O_3', atoms: { Al: 2, O: 3 } }],
+    elements: ['Al', 'O'],
+    steps: [
+      { focus: 'O', why: 'El Oxígeno tiene subíndices 2 y 3 (m.c.m. = 6). Ponemos 3 al O₂ y 2 al Al₂O₃.', calc: 'O: 3 × 2 = 6 en reactivos  |  2 × 3 = 6 en productos', math: '\\mathrm{Al + \\color{#db2777}{\\mathbf{3}}O_2 \\rightarrow \\color{#db2777}{\\mathbf{2}}Al_2O_3}', coefs: [1, 3, 2] },
+      { focus: 'Al', why: 'Ahora el Aluminio tiene 2 × 2 = 4 en productos. Ponemos un 4 al Al en reactivos.', calc: 'Reactivos: 4 × 1 = 4 átomos de Al', math: '\\mathrm{\\color{#db2777}{\\mathbf{4}}Al + 3O_2 \\rightarrow 2Al_2O_3}', coefs: [4, 3, 2] },
+      { focus: null, why: '¡Formación del óxido de aluminio equilibrada!', calc: 'Al: 4 = 4  |  O: 6 = 6', math: '\\boxed{\\mathrm{4Al + 3O_2 \\rightarrow 2Al_2O_3}}', coefs: [4, 3, 2] }
+    ]
+  },
+  {
+    num: 'Ejercicio 5', eq: '\\mathrm{Fe + HCl \\rightarrow FeCl_3 + H_2}',
+    eqPlain: 'Fe + HCl → FeCl₃ + H₂', finalPlain: '2Fe + 6HCl → 2FeCl₃ + 3H₂',
+    reactants: [{ f: 'Fe', atoms: { Fe: 1 } }, { f: 'HCl', atoms: { H: 1, Cl: 1 } }],
+    products:  [{ f: 'FeCl_3', atoms: { Fe: 1, Cl: 3 } }, { f: 'H_2', atoms: { H: 2 } }],
+    elements: ['Fe', 'Cl', 'H'],
+    steps: [
+      { focus: 'Cl', why: 'Cloro aparece de 3 en 3 (FeCl₃) e Hidrógeno de 2 en 2 (H₂). Su m.c.m. es 6 → ponemos 6 al HCl.', calc: 'Reactivos: 6 H y 6 Cl disponibles', math: '\\mathrm{Fe + \\color{#db2777}{\\mathbf{6}}HCl \\rightarrow FeCl_3 + H_2}', coefs: [1, 6, 1, 1] },
+      { focus: 'H', why: 'Igualamos Cloro e Hidrógeno en productos: 2 al FeCl₃ y 3 al H₂.', calc: 'Productos: 2 Fe, 6 Cl, 6 H', math: '\\mathrm{Fe + 6HCl \\rightarrow \\color{#db2777}{\\mathbf{2}}FeCl_3 + \\color{#db2777}{\\mathbf{3}}H_2}', coefs: [1, 6, 2, 3] },
+      { focus: 'Fe', why: 'Finalmente igualamos el Hierro: ponemos 2 al Fe en reactivos.', calc: 'Reactivos: 2 × 1 = 2 átomos de Fe', math: '\\mathrm{\\color{#db2777}{\\mathbf{2}}Fe + 6HCl \\rightarrow 2FeCl_3 + 3H_2}', coefs: [2, 6, 2, 3] },
+      { focus: null, why: '¡Ecuación completamente balanceada!', calc: 'Fe: 2 = 2  |  Cl: 6 = 6  |  H: 6 = 6', math: '\\boxed{\\mathrm{2Fe + 6HCl \\rightarrow 2FeCl_3 + 3H_2}}', coefs: [2, 6, 2, 3] }
+    ]
+  },
+  {
+    num: 'Ejercicio 6', eq: '\\mathrm{KClO_3 \\rightarrow KCl + O_2}',
+    eqPlain: 'KClO₃ → KCl + O₂', finalPlain: '2KClO₃ → 2KCl + 3O₂',
+    reactants: [{ f: 'KClO_3', atoms: { K: 1, Cl: 1, O: 3 } }],
+    products:  [{ f: 'KCl', atoms: { K: 1, Cl: 1 } }, { f: 'O_2', atoms: { O: 2 } }],
+    elements: ['K', 'Cl', 'O'],
+    steps: [
+      { focus: 'O', why: 'El Oxígeno tiene subíndices 3 y 2 (m.c.m. = 6). Cruzamos: 2 al KClO₃ y 3 al O₂.', calc: 'O: 2 × 3 = 6 en reactivos  |  3 × 2 = 6 en productos', math: '\\mathrm{\\color{#db2777}{\\mathbf{2}}KClO_3 \\rightarrow KCl + \\color{#db2777}{\\mathbf{3}}O_2}', coefs: [2, 1, 3] },
+      { focus: 'K', why: 'El 2 delante de KClO₃ duplicó al Potasio y al Cloro. Ponemos 2 al KCl.', calc: 'Productos: 2 K y 2 Cl', math: '\\mathrm{2KClO_3 \\rightarrow \\color{#db2777}{\\mathbf{2}}KCl + 3O_2}', coefs: [2, 2, 3] },
+      { focus: null, why: '¡Descomposición del clorato de potasio balanceada!', calc: 'K: 2 = 2  |  Cl: 2 = 2  |  O: 6 = 6', math: '\\boxed{\\mathrm{2KClO_3 \\rightarrow 2KCl + 3O_2}}', coefs: [2, 2, 3] }
+    ]
+  },
+  {
+    num: 'Ejercicio 7', eq: '\\mathrm{C_3H_8 + O_2 \\rightarrow CO_2 + H_2O}',
+    eqPlain: 'C₃H₈ + O₂ → CO₂ + H₂O', finalPlain: 'C₃H₈ + 5O₂ → 3CO₂ + 4H₂O',
+    reactants: [{ f: 'C_3H_8', atoms: { C: 3, H: 8 } }, { f: 'O_2', atoms: { O: 2 } }],
+    products:  [{ f: 'CO_2', atoms: { C: 1, O: 2 } }, { f: 'H_2O', atoms: { H: 2, O: 1 } }],
+    elements: ['C', 'H', 'O'],
+    steps: [
+      { focus: 'C', why: 'Primero el Carbono: hay 3 en reactivos. Ponemos un 3 delante del CO₂.', calc: 'Productos: 3 × 1 = 3 C', math: '\\mathrm{C_3H_8 + O_2 \\rightarrow \\color{#db2777}{\\mathbf{3}}CO_2 + H_2O}', coefs: [1, 1, 3, 1] },
+      { focus: 'H', why: 'Luego el Hidrógeno: hay 8 en reactivos. Ponemos un 4 delante del H₂O (4 × 2 = 8).', calc: 'Productos: 4 × 2 = 8 H', math: '\\mathrm{C_3H_8 + O_2 \\rightarrow 3CO_2 + \\color{#db2777}{\\mathbf{4}}H_2O}', coefs: [1, 1, 3, 4] },
+      { focus: 'O', why: 'Sumamos el Oxígeno en productos: (3 × 2) + (4 × 1) = 10. Ponemos 5 al O₂.', calc: 'Reactivos: 5 × 2 = 10 átomos de O', math: '\\mathrm{C_3H_8 + \\color{#db2777}{\\mathbf{5}}O_2 \\rightarrow 3CO_2 + 4H_2O}', coefs: [1, 5, 3, 4] },
+      { focus: null, why: '¡Combustión del gas propano balanceada!', calc: 'C: 3 = 3  |  H: 8 = 8  |  O: 10 = 10', math: '\\boxed{\\mathrm{C_3H_8 + 5O_2 \\rightarrow 3CO_2 + 4H_2O}}', coefs: [1, 5, 3, 4] }
+    ]
+  },
+  {
+    num: 'Ejercicio 8', eq: '\\mathrm{NaOH + H_2SO_4 \\rightarrow Na_2SO_4 + H_2O}',
+    eqPlain: 'NaOH + H₂SO₄ → Na₂SO₄ + H₂O', finalPlain: '2NaOH + H₂SO₄ → Na₂SO₄ + 2H₂O',
+    reactants: [{ f: 'NaOH', atoms: { Na: 1, O: 1, H: 1 } }, { f: 'H_2SO_4', atoms: { H: 2, S: 1, O: 4 } }],
+    products:  [{ f: 'Na_2SO_4', atoms: { Na: 2, S: 1, O: 4 } }, { f: 'H_2O', atoms: { H: 2, O: 1 } }],
+    elements: ['Na', 'S', 'H', 'O'],
+    steps: [
+      { focus: 'Na', why: 'Empezamos por el Metal (Sodio): hay 2 en productos. Ponemos 2 al NaOH.', calc: 'Reactivos: 2 Na  |  H totales: 2 + 2 = 4 H', math: '\\mathrm{\\color{#db2777}{\\mathbf{2}}NaOH + H_2SO_4 \\rightarrow Na_2SO_4 + H_2O}', coefs: [2, 1, 1, 1] },
+      { focus: 'H', why: 'El Azufre (S) ya está 1 a 1. Para los 4 Hidrógenos, ponemos 2 al H₂O.', calc: 'Productos: 2 × 2 = 4 H  |  O totales: 4 + 2 = 6 O', math: '\\mathrm{2NaOH + H_2SO_4 \\rightarrow Na_2SO_4 + \\color{#db2777}{\\mathbf{2}}H_2O}', coefs: [2, 1, 1, 2] },
+      { focus: null, why: '¡Neutralización ácido-base equilibrada!', calc: 'Na: 2 = 2  |  S: 1 = 1  |  H: 4 = 4  |  O: 6 = 6', math: '\\boxed{\\mathrm{2NaOH + H_2SO_4 \\rightarrow Na_2SO_4 + 2H_2O}}', coefs: [2, 1, 1, 2] }
+    ]
+  },
+  {
+    num: 'Ejercicio 9', eq: '\\mathrm{Ca + H_2O \\rightarrow Ca(OH)_2 + H_2}',
+    eqPlain: 'Ca + H₂O → Ca(OH)₂ + H₂', finalPlain: 'Ca + 2H₂O → Ca(OH)₂ + H₂',
+    reactants: [{ f: 'Ca', atoms: { Ca: 1 } }, { f: 'H_2O', atoms: { H: 2, O: 1 } }],
+    products:  [{ f: 'Ca(OH)_2', atoms: { Ca: 1, O: 2, H: 2 } }, { f: 'H_2', atoms: { H: 2 } }],
+    elements: ['Ca', 'H', 'O'],
+    steps: [
+      { focus: 'H', why: 'El Calcio está 1 a 1. En productos hay 4 Hidrógenos (2 + 2). Ponemos 2 al H₂O.', calc: 'Reactivos: 2 × 2 = 4 H  |  2 × 1 = 2 O', math: '\\mathrm{Ca + \\color{#db2777}{\\mathbf{2}}H_2O \\rightarrow Ca(OH)_2 + H_2}', coefs: [1, 2, 1, 1] },
+      { focus: null, why: 'El Oxígeno también quedó igualado (2 = 2). ¡Ecuación lista!', calc: 'Ca: 1 = 1  |  H: 4 = 4  |  O: 2 = 2', math: '\\boxed{\\mathrm{Ca + 2H_2O \\rightarrow Ca(OH)_2 + H_2}}', coefs: [1, 2, 1, 1] }
+    ]
+  },
+  {
+    num: 'Ejercicio 10', eq: '\\mathrm{Fe_2O_3 + C \\rightarrow Fe + CO_2}',
+    eqPlain: 'Fe₂O₃ + C → Fe + CO₂', finalPlain: '2Fe₂O₃ + 3C → 4Fe + 3CO₂',
+    reactants: [{ f: 'Fe_2O_3', atoms: { Fe: 2, O: 3 } }, { f: 'C', atoms: { C: 1 } }],
+    products:  [{ f: 'Fe', atoms: { Fe: 1 } }, { f: 'CO_2', atoms: { C: 1, O: 2 } }],
+    elements: ['Fe', 'C', 'O'],
+    steps: [
+      { focus: 'O', why: 'El Oxígeno tiene subíndices 3 y 2 (m.c.m. = 6). Cruzamos: 2 al Fe₂O₃ y 3 al CO₂.', calc: 'O: 2 × 3 = 6 en reactivos  |  3 × 2 = 6 en productos', math: '\\mathrm{\\color{#db2777}{\\mathbf{2}}Fe_2O_3 + C \\rightarrow Fe + \\color{#db2777}{\\mathbf{3}}CO_2}', coefs: [2, 1, 1, 3] },
+      { focus: 'Fe', why: 'Ahora hay 2 × 2 = 4 Hierros en reactivos. Ponemos un 4 al Fe en productos.', calc: 'Productos: 4 × 1 = 4 átomos de Fe', math: '\\mathrm{2Fe_2O_3 + C \\rightarrow \\color{#db2777}{\\mathbf{4}}Fe + 3CO_2}', coefs: [2, 1, 4, 3] },
+      { focus: 'C', why: 'Hay 3 Carbonos en productos. Ponemos un 3 al C en reactivos.', calc: 'Reactivos: 3 × 1 = 3 átomos de C', math: '\\mathrm{2Fe_2O_3 + \\color{#db2777}{\\mathbf{3}}C \\rightarrow 4Fe + 3CO_2}', coefs: [2, 3, 4, 3] },
+      { focus: null, why: '¡Reducción del óxido de hierro completamente balanceada!', calc: 'Fe: 4 = 4  |  C: 3 = 3  |  O: 6 = 6', math: '\\boxed{\\mathrm{2Fe_2O_3 + 3C \\rightarrow 4Fe + 3CO_2}}', coefs: [2, 3, 4, 3] }
+    ]
+  },
+  {
+    num: 'Ejercicio 11', eq: '\\mathrm{P_4 + O_2 \\rightarrow P_2O_5}',
+    eqPlain: 'P₄ + O₂ → P₂O₅', finalPlain: 'P₄ + 5O₂ → 2P₂O₅',
+    reactants: [{ f: 'P_4', atoms: { P: 4 } }, { f: 'O_2', atoms: { O: 2 } }],
+    products:  [{ f: 'P_2O_5', atoms: { P: 2, O: 5 } }],
+    elements: ['P', 'O'],
+    steps: [
+      { focus: 'P', why: 'Empezamos por el Fósforo (No Metal): hay 4 en reactivos y 2 en productos. Ponemos un 2 al P₂O₅.', calc: 'Productos: 2 × 2 = 4 P  |  2 × 5 = 10 O', math: '\\mathrm{P_4 + O_2 \\rightarrow \\color{#db2777}{\\mathbf{2}}P_2O_5}', coefs: [1, 1, 2] },
+      { focus: 'O', why: 'Ahora tenemos 10 Oxígenos en productos y 2 en reactivos. Ponemos un 5 al O₂ (5 × 2 = 10).', calc: 'Reactivos: 5 × 2 = 10 átomos de O', math: '\\mathrm{P_4 + \\color{#db2777}{\\mathbf{5}}O_2 \\rightarrow 2P_2O_5}', coefs: [1, 5, 2] },
+      { focus: null, why: '¡Síntesis del pentóxido de difósforo balanceada!', calc: 'P: 4 = 4  |  O: 10 = 10', math: '\\boxed{\\mathrm{P_4 + 5O_2 \\rightarrow 2P_2O_5}}', coefs: [1, 5, 2] }
+    ]
+  },
+  {
+    num: 'Ejercicio 12', eq: '\\mathrm{Al(OH)_3 + H_2SO_4 \\rightarrow Al_2(SO_4)_3 + H_2O}',
+    eqPlain: 'Al(OH)₃ + H₂SO₄ → Al₂(SO₄)₃ + H₂O', finalPlain: '2Al(OH)₃ + 3H₂SO₄ → Al₂(SO₄)₃ + 6H₂O',
+    reactants: [{ f: 'Al(OH)_3', atoms: { Al: 1, O: 3, H: 3 } }, { f: 'H_2SO_4', atoms: { H: 2, S: 1, O: 4 } }],
+    products:  [{ f: 'Al_2(SO_4)_3', atoms: { Al: 2, S: 3, O: 12 } }, { f: 'H_2O', atoms: { H: 2, O: 1 } }],
+    elements: ['Al', 'S', 'H', 'O'],
+    steps: [
+      { focus: 'Al', why: 'Paso 1 (Metal - Aluminio): hay 2 en productos. Ponemos un 2 delante de Al(OH)₃.', calc: 'Reactivos: 2 Al, 6 O y 6 H en Al(OH)₃', math: '\\mathrm{\\color{#db2777}{\\mathbf{2}}Al(OH)_3 + H_2SO_4 \\rightarrow Al_2(SO_4)_3 + H_2O}', coefs: [2, 1, 1, 1] },
+      { focus: 'S', why: 'Paso 2 (No Metal - Azufre): hay 3 en productos. Ponemos un 3 delante de H₂SO₄.', calc: 'Reactivos: 3 S  |  H totales: 6 + 6 = 12 H', math: '\\mathrm{2Al(OH)_3 + \\color{#db2777}{\\mathbf{3}}H_2SO_4 \\rightarrow Al_2(SO_4)_3 + H_2O}', coefs: [2, 3, 1, 1] },
+      { focus: 'H', why: 'Paso 3 (Hidrógeno): tenemos 12 en reactivos. Ponemos un 6 al H₂O (6 × 2 = 12).', calc: 'Productos: 12 H  |  O totales: 12 + 6 = 18 O', math: '\\mathrm{2Al(OH)_3 + 3H_2SO_4 \\rightarrow Al_2(SO_4)_3 + \\color{#db2777}{\\mathbf{6}}H_2O}', coefs: [2, 3, 1, 6] },
+      { focus: null, why: '¡Reto final superado! Todos los elementos coinciden a la perfección.', calc: 'Al: 2 = 2  |  S: 3 = 3  |  H: 12 = 12  |  O: 18 = 18', math: '\\boxed{\\mathrm{2Al(OH)_3 + 3H_2SO_4 \\rightarrow Al_2(SO_4)_3 + 6H_2O}}', coefs: [2, 3, 1, 6] }
+    ]
+  }
+];
+
+function math(tex, el, display = false) {
+  if (window.katex) {
+    try { window.katex.render(tex, el, { displayMode: display, throwOnError: false, strict: 'ignore' }); return; }
+    catch (e) {}
+  }
+  el.textContent = tex;
+}
+
+function createFloaters() {
+  const f = $('floaters');
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement('span');
+    const size = 10 + Math.random() * 18;
+    s.style.width = size + 'px'; s.style.height = size + 'px';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.animationDuration = (9 + Math.random() * 16) + 's';
+    s.style.animationDelay = (-Math.random() * 18) + 's';
+    f.appendChild(s);
+  }
+}
+
+// Confeti
+const confCanvas = $('confetti'), confCtx = confCanvas.getContext('2d');
+let particles = [], confAnim = null;
+function launchConfetti() {
+  confCanvas.width = innerWidth; confCanvas.height = innerHeight;
+  const cols = ['#ec4899', '#8b5cf6', '#06b6d4', '#facc15', '#10b981', '#f97316'];
+  for (let i = 0; i < 65; i++) {
+    particles.push({
+      x: innerWidth * (0.25 + Math.random() * 0.5), y: innerHeight * 0.35,
+      vx: (Math.random() - 0.5) * 12, vy: -Math.random() * 10 - 3,
+      size: 6 + Math.random() * 6, color: cols[Math.floor(Math.random() * cols.length)], life: 1
+    });
+  }
+  if (!confAnim) animateConfetti();
+}
+function animateConfetti() {
+  confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.32; p.life -= 0.018;
+    confCtx.globalAlpha = Math.max(0, p.life);
+    confCtx.fillStyle = p.color;
+    confCtx.fillRect(p.x, p.y, p.size, p.size * 0.6);
+  });
+  particles = particles.filter(p => p.life > 0);
+  if (particles.length) confAnim = requestAnimationFrame(animateConfetti);
+  else { confAnim = null; confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height); }
+}
+
+function computeCounts(ex, coefs) {
+  const rCount = {}, pCount = {};
+  ex.elements.forEach(e => { rCount[e] = 0; pCount[e] = 0; });
+  ex.reactants.forEach((term, idx) => {
+    const c = coefs[idx] || 1;
+    Object.entries(term.atoms).forEach(([el, n]) => rCount[el] += n * c);
+  });
+  const offset = ex.reactants.length;
+  ex.products.forEach((term, idx) => {
+    const c = coefs[offset + idx] || 1;
+    Object.entries(term.atoms).forEach(([el, n]) => pCount[el] += n * c);
+  });
+  return ex.elements.map(sym => ({ sym, r: rCount[sym], p: pCount[sym] }));
+}
+
+function renderScale(counts) {
+  let totalR = 0, totalP = 0, allMatch = true;
+  counts.forEach(c => { totalR += c.r; totalP += c.p; if (c.r !== c.p) allMatch = false; });
+  let angle = 0;
+  if (!allMatch) {
+    const diff = totalP - totalR;
+    angle = Math.max(-16, Math.min(16, diff * 2.8));
+    if (angle === 0) angle = 7;
+  }
+  const beamColor = allMatch ? '#34d399' : '#f43f5e';
+  $('scaleSvg').innerHTML = `
+    <svg viewBox="0 0 160 76" width="150" height="70">
+      <polygon points="80,34 68,68 92,68" fill="#6366f1" />
+      <rect x="52" y="66" width="56" height="6" rx="3" fill="#a5b4fc" />
+      <g class="scaleBeam" style="transform: rotate(${angle}deg)">
+        <line x1="22" y1="34" x2="138" y2="34" stroke="${beamColor}" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="80" cy="34" r="6" fill="#fde047" />
+        <path d="M12,48 Q24,58 36,48 Z" fill="#38bdf8" />
+        <line x1="24" y1="34" x2="24" y2="48" stroke="#cbd5e1" stroke-width="2"/>
+        <path d="M124,48 Q136,58 148,48 Z" fill="#f472b6" />
+        <line x1="136" y1="34" x2="136" y2="48" stroke="#cbd5e1" stroke-width="2"/>
+      </g>
+    </svg>`;
+  return allMatch;
+}
+
+function renderDots(count, color) {
+  const show = Math.min(count, 12);
+  let html = '<div class="dots">';
+  for (let i = 0; i < show; i++) html += `<span class="dot" style="background:${color}"></span>`;
+  if (count > 12) html += `<span style="font-size:11px;font-weight:900;color:#475569">+${count - 12}</span>`;
+  html += '</div>';
+  return html;
+}
+
+function renderInventory(counts, focusElem) {
+  let html = `<table class="invTable"><thead><tr><th>Elemento</th><th>Reactivos</th><th>Productos</th><th>Estado</th></tr></thead><tbody>`;
+  counts.forEach(el => {
+    const match = el.r === el.p;
+    const color = ELEM_COLORS[el.sym] || '#6366f1';
+    const cls = match ? 'tdMatch' : 'tdDiff';
+    const isFocused = el.sym === (manualFocus || focusElem);
+    const prev = prevCountsMap[el.sym];
+    const bumpR = prev && prev.r !== el.r ? 'bump' : '';
+    const bumpP = prev && prev.p !== el.p ? 'bump' : '';
+    const status = match
+      ? '<span class="statusPill stOk">✓ Igual</span>'
+      : '<span class="statusPill stNo">✗ Falta</span>';
+    html += `<tr data-sym="${el.sym}" class="${isFocused ? 'focusRow' : ''}">
+      <td><span class="elemBadge" style="background:${color}">${el.sym}</span></td>
+      <td class="${cls}"><div class="countCell"><span class="countNum ${bumpR}">${el.r}</span>${renderDots(el.r, color)}</div></td>
+      <td class="${cls}"><div class="countCell"><span class="countNum ${bumpP}">${el.p}</span>${renderDots(el.p, color)}</div></td>
+      <td>${status}</td>
+    </tr>`;
+    prevCountsMap[el.sym] = { r: el.r, p: el.p };
+  });
+  html += `</tbody></table>`;
+  return html;
+}
+
+function updateCompletionUI() {
+  const count = completedSet.size;
+  const counter = $('doneCounter');
+  counter.textContent = `Completados: ${count} / ${EXERCISES.length}`;
+  counter.classList.toggle('allDone', count === EXERCISES.length);
+  $('downloadBtn').classList.toggle('hidden', count < EXERCISES.length);
+  renderNav();
+}
+
+function markCompleted(idx) {
+  if (!completedSet.has(idx)) {
+    completedSet.add(idx);
+    launchConfetti();
+    updateCompletionUI();
+  }
+}
+
+function renderNav() {
+  const container = $('navChips');
+  container.innerHTML = '';
+  EXERCISES.forEach((ex, i) => {
+    const btn = document.createElement('button');
+    const isDone = completedSet.has(i);
+    btn.className = `exchip ${isDone ? 'done' : ''} ${i === currentEx ? 'active' : ''}`;
+    btn.textContent = i + 1;
+    btn.title = ex.num;
+    btn.onclick = () => selectExercise(i);
+    container.appendChild(btn);
+  });
+}
+
+function selectExercise(idx) {
+  currentEx = idx;
+  revealed = 0;
+  manualFocus = null;
+  prevCountsMap = {};
+  const ex = EXERCISES[currentEx];
+  userCoefs = new Array(ex.reactants.length + ex.products.length).fill(1);
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  laserStrokes = [];
+  lctx.clearRect(0, 0, innerWidth, innerHeight);
+  undo = [];
+  renderNav();
+  render();
+}
+
+function renderPractice(ex, allMatch) {
+  const area = $('stepsArea');
+  area.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'practiceWrap';
+
+  const eqBox = document.createElement('div');
+  eqBox.className = 'practiceEq';
+
+  const buildTerm = (term, idx) => {
+    const box = document.createElement('div');
+    box.className = 'termBox';
+    box.innerHTML = `
+      <div class="coefCtrl">
+        <button class="cBtn" data-i="${idx}" data-d="1">+</button>
+        <span class="cVal">${userCoefs[idx]}</span>
+        <button class="cBtn" data-i="${idx}" data-d="-1">−</button>
+      </div>
+      <span class="chemFormula"></span>`;
+    math(`\\mathrm{${term.f}}`, box.querySelector('.chemFormula'), false);
+    return box;
+  };
+
+  ex.reactants.forEach((t, i) => {
+    if (i > 0) eqBox.insertAdjacentHTML('beforeend', '<span class="chemOp">+</span>');
+    eqBox.appendChild(buildTerm(t, i));
+  });
+  eqBox.insertAdjacentHTML('beforeend', '<span class="chemOp">→</span>');
+  ex.products.forEach((t, i) => {
+    if (i > 0) eqBox.insertAdjacentHTML('beforeend', '<span class="chemOp">+</span>');
+    eqBox.appendChild(buildTerm(t, ex.reactants.length + i));
+  });
+
+  wrap.appendChild(eqBox);
+
+  if (allMatch) {
+    wrap.insertAdjacentHTML('beforeend', '<div class="notice">🎉 ¡Excelente! Lograste balancear esta ecuación por ti mismo.</div>');
+  } else {
+    wrap.insertAdjacentHTML('beforeend', '<div class="practiceTip">💡 Ajusta los coeficientes con <b>+</b> y <b>−</b> hasta que la balanza quede horizontal y todos los elementos estén en verde.</div>');
+  }
+
+  area.appendChild(wrap);
+  area.querySelectorAll('.cBtn').forEach(btn => {
+    btn.onclick = () => {
+      const idx = +btn.dataset.i;
+      const d = +btn.dataset.d;
+      userCoefs[idx] = Math.max(1, Math.min(12, userCoefs[idx] + d));
+      const newCounts = computeCounts(ex, userCoefs);
+      if (newCounts.every(c => c.r === c.p)) markCompleted(currentEx);
+      render();
+    };
+  });
+}
+
+function render() {
+  const ex = EXERCISES[currentEx];
+  const totalSteps = ex.steps.length;
+
+  math(ex.eq, $('enunciadoEq'), true);
+  $('currentTag').textContent = `${ex.num} de 12`;
+
+  const isGuided = mode === 'guided';
+  $('guidedControls').classList.toggle('hidden', !isGuided);
+  $('progressShell').classList.toggle('hidden', !isGuided);
+  $('progressTxt').classList.toggle('hidden', !isGuided);
+  $('leftTitle').textContent = isGuided ? '✍️ Resolución paso a paso' : '🎮 Ajusta los coeficientes';
+
+  let activeCoefs, focusElem = null;
+  if (isGuided) {
+    activeCoefs = revealed === 0
+      ? new Array(ex.reactants.length + ex.products.length).fill(1)
+      : ex.steps[revealed - 1].coefs;
+    focusElem = revealed > 0 ? ex.steps[revealed - 1].focus : null;
+  } else {
+    activeCoefs = userCoefs;
+  }
+
+  const counts = computeCounts(ex, activeCoefs);
+  const allMatch = renderScale(counts);
+  $('graphBox').innerHTML = renderInventory(counts, focusElem);
+
+  $('graphBox').querySelectorAll('tbody tr').forEach(row => {
+    row.onclick = () => {
+      const sym = row.dataset.sym;
+      manualFocus = manualFocus === sym ? null : sym;
+      render();
+    };
+  });
+
+  if (isGuided) {
+    const area = $('stepsArea');
+    area.innerHTML = '';
+    if (!revealed) {
+      area.innerHTML = `
+        <div class="emptyBox">
+          <div class="emptyCard">
+            <strong>🔍 Paso 0: Diagnóstico inicial</strong>
+            <p>Observa la balanza y la tabla de la derecha: los elementos en <b style="color:#e11d48">rojo</b> están desbalanceados.</p>
+            <p>Presiona <b>Siguiente paso ▶</b> para equilibrarlos uno por uno.</p>
+          </div>
+        </div>`;
+    } else {
+      ex.steps.slice(0, revealed).forEach((s, i) => {
+        const d = document.createElement('div');
+        d.className = 'step' + (i === revealed - 1 ? ' current' : '');
+        const pillColor = s.focus ? (ELEM_COLORS[s.focus] || '#0ea5e9') : '#10b981';
+        const pillText = s.focus ? `Enfoque: ${s.focus}` : 'Verificación';
+        d.innerHTML = `
+          <div class="stepHead">
+            <span class="stepNum">${i + 1}</span>
+            <span class="focusPill" style="background:${pillColor}">${pillText}</span>
+          </div>
+          <div class="stepWhy">${s.why}</div>
+          <div class="calcHint">🧮 ${s.calc}</div>
+          <div class="mathLine"></div>`;
+        area.appendChild(d);
+        math(s.math, d.querySelector('.mathLine'), true);
+      });
+      if (revealed === totalSteps) {
+        markCompleted(currentEx);
+        const d = document.createElement('div');
+        d.className = 'notice';
+        d.textContent = '✓ ¡Ecuación balanceada! Se cumple la Ley de Conservación de la Masa.';
+        area.appendChild(d);
+      }
+      area.scrollTop = area.scrollHeight;
+    }
+
+    $('stepMeta').textContent = `${revealed} de ${totalSteps} pasos`;
+    $('progressTxt').textContent = `${revealed} / ${totalSteps}`;
+    $('progressBar').style.width = ((revealed / totalSteps) * 100) + '%';
+    $('nextStep').disabled = revealed === totalSteps;
+    $('prevStep').disabled = revealed === 0;
+  } else {
+    $('stepMeta').textContent = allMatch ? '¡Balanceada!' : 'En progreso';
+    renderPractice(ex, allMatch);
+  }
+
+  $('graphTitle').textContent = allMatch ? '⚖️ ¡Balanza en equilibrio!' : '⚖️ Balanza desequilibrada';
+  $('graphTip').textContent = allMatch
+    ? 'Misma cantidad de átomos en reactivos y productos.'
+    : 'Haz clic en cualquier fila para enfocarte en ese elemento.';
+}
+
+// ==========================================================
+// DESCARGA DIRECTA EN PDF INSTITUCIONAL CON GRÁFICOS Y ESQUEMAS
+// ==========================================================
+function downloadInstitutionalPDF() {
+  const btn = $('downloadBtn');
+  const origText = btn.textContent;
+  btn.textContent = '⏳ Generando PDF...';
+  btn.disabled = true;
+
+  const cardsHtml = EXERCISES.map((ex, i) => {
+    const finalCoefs = ex.steps[ex.steps.length - 1].coefs;
+    const finalCounts = computeCounts(ex, finalCoefs);
+
+    // Mini-esquema gráfico de átomos balanceados por ejercicio
+    const atomsChart = finalCounts.map(c => {
+      const col = ELEM_COLORS[c.sym] || '#6366f1';
+      const maxDots = Math.min(c.r, 8);
+      const dots = Array(maxDots).fill(`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${col};margin-right:2px;"></span>`).join('');
+      const extra = c.r > 8 ? `<span style="font-size:9px;color:#475569;font-weight:700;">+${c.r - 8}</span>` : '';
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:4px 7px;margin-bottom:4px;">
+          <span style="display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:6px;background:${col};color:#fff;font-weight:900;font-size:11px;">${c.sym}</span>
+          <div style="flex:1;padding:0 8px;">${dots}${extra}</div>
+          <span style="font-size:11px;font-weight:800;color:#059669;background:#dcfce7;padding:2px 6px;border-radius:99px;">${c.r} = ${c.p} ✓</span>
+        </div>`;
+    }).join('');
+
+    const stepsHtml = ex.steps.map((s, idx) =>
+      `<li style="margin-bottom:3px;"><strong>Paso ${idx + 1}:</strong> ${s.why} <span style="color:#64748b;">(${s.calc})</span></li>`
+    ).join('');
+
+    return `
+      <div style="border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 12px;margin-bottom:11px;page-break-inside:avoid;background:#ffffff;">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px dashed #cbd5e1;padding-bottom:6px;margin-bottom:8px;">
+          <span style="background:#1e3a8a;color:#fff;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:800;">EJERCICIO ${i + 1}</span>
+          <span style="font-size:13px;color:#334155;">Inicial: <strong style="color:#0f172a;">${ex.eqPlain}</strong></span>
         </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> Primero el Carbono: hay 3 en reactivos. Ponemos un 3 delante del CO₂. <em>(Productos: 3 × 1 = 3 C)</em></li><li><strong>Paso 2:</strong> Luego el Hidrógeno: hay 8 en reactivos. Ponemos un 4 delante del H₂O (4 × 2 = 8). <em>(Productos: 4 × 2 = 8 H)</em></li><li><strong>Paso 3:</strong> Sumamos el Oxígeno en productos: (3 × 2) + (4 × 1) = 10. Ponemos 5 al O₂. <em>(Reactivos: 5 × 2 = 10 átomos de O)</em></li><li><strong>Paso 4:</strong> ¡Combustión del gas propano balanceada! <em>(C: 3 = 3  |  H: 8 = 8  |  O: 10 = 10)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>C₃H₈ + 5O₂ → 3CO₂ + 4H₂O</strong></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 8</span>
-          <span class="orig">Ecuación inicial: <strong>NaOH + H₂SO₄ → Na₂SO₄ + H₂O</strong></span>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="flex:1.35;">
+            <ol style="margin:0 0 8px 16px;padding:0;font-size:11.5px;line-height:1.45;color:#1e293b;">${stepsHtml}</ol>
+            <div style="background:#ecfdf5;border-left:4px solid #059669;padding:5px 9px;border-radius:4px;font-size:12.5px;color:#065f46;">
+              <strong>Ecuación Balanceada:</strong> ${ex.finalPlain}
+            </div>
+          </div>
+          <div style="flex:0.85;border-left:1px solid #e2e8f0;padding-left:10px;">
+            <div style="font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;margin-bottom:5px;text-align:center;">⚖️ Inventario Final</div>
+            ${atomsChart}
+          </div>
         </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> Empezamos por el Metal (Sodio): hay 2 en productos. Ponemos 2 al NaOH. <em>(Reactivos: 2 Na  |  H totales: 2 + 2 = 4 H)</em></li><li><strong>Paso 2:</strong> El Azufre (S) ya está 1 a 1. Para los 4 Hidrógenos, ponemos 2 al H₂O. <em>(Productos: 2 × 2 = 4 H  |  O totales: 4 + 2 = 6 O)</em></li><li><strong>Paso 3:</strong> ¡Neutralización ácido-base equilibrada! <em>(Na: 2 = 2  |  S: 1 = 1  |  H: 4 = 4  |  O: 6 = 6)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>2NaOH + H₂SO₄ → Na₂SO₄ + 2H₂O</strong></div>
+      </div>`;
+  }).join('');
+
+  const container = document.createElement('div');
+  container.style.width = '760px';
+  container.style.padding = '16px 22px';
+  container.style.fontFamily = "'Nunito', 'Segoe UI', Arial, sans-serif";
+  container.style.color = '#0f172a';
+  container.style.background = '#ffffff';
+
+  container.innerHTML = `
+    <div style="border-bottom:3px solid #1e3a8a;padding-bottom:10px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:21px;font-weight:900;color:#1e3a8a;text-transform:uppercase;letter-spacing:1px;">Química</div>
+      <div style="font-size:14px;font-weight:800;color:#475569;margin-top:2px;">3º de Educación Secundaria</div>
+      <div style="font-size:17px;font-weight:900;color:#0f766e;margin-top:3px;">Balanceo de Ecuaciones Químicas</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#334155;margin-bottom:12px;background:#f8fafc;padding:7px 12px;border-radius:8px;border:1px solid #e2e8f0;">
+      <span><strong>Estudiante:</strong> _________________________________________</span>
+      <span><strong>Fecha:</strong> ____ / ____ / ______</span>
+    </div>
+
+    <!-- Esquema gráfico del Método de Tanteo -->
+    <div style="background:linear-gradient(135deg,#eef2ff,#f0fdfa);border:1.5px solid #818cf8;border-radius:10px;padding:10px 12px;margin-bottom:14px;page-break-inside:avoid;">
+      <div style="font-size:11.5px;font-weight:900;color:#312e81;text-align:center;margin-bottom:8px;text-transform:uppercase;">
+        📌 Esquema del Método de Tanteo (Orden de Balanceo)
       </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 9</span>
-          <span class="orig">Ecuación inicial: <strong>Ca + H₂O → Ca(OH)₂ + H₂</strong></span>
-        </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> El Calcio está 1 a 1. En productos hay 4 Hidrógenos (2 + 2). Ponemos 2 al H₂O. <em>(Reactivos: 2 × 2 = 4 H  |  2 × 1 = 2 O)</em></li><li><strong>Paso 2:</strong> El Oxígeno también quedó igualado (2 = 2). ¡Ecuación lista! <em>(Ca: 1 = 1  |  H: 4 = 4  |  O: 2 = 2)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>Ca + 2H₂O → Ca(OH)₂ + H₂</strong></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;text-align:center;">
+        <div style="flex:1;background:#f97316;color:#fff;padding:6px;border-radius:8px;font-size:11px;font-weight:900;">1. METALES<br><span style="font-weight:700;font-size:9.5px;">Fe, Al, Na, Ca, K</span></div>
+        <div style="font-weight:900;color:#4f46e5;font-size:16px;">➔</div>
+        <div style="flex:1;background:#6366f1;color:#fff;padding:6px;border-radius:8px;font-size:11px;font-weight:900;">2. NO METALES<br><span style="font-weight:700;font-size:9.5px;">C, N, S, P, Cl</span></div>
+        <div style="font-weight:900;color:#4f46e5;font-size:16px;">➔</div>
+        <div style="flex:1;background:#06b6d4;color:#fff;padding:6px;border-radius:8px;font-size:11px;font-weight:900;">3. HIDRÓGENO<br><span style="font-weight:700;font-size:9.5px;">H</span></div>
+        <div style="font-weight:900;color:#4f46e5;font-size:16px;">➔</div>
+        <div style="flex:1;background:#f43f5e;color:#fff;padding:6px;border-radius:8px;font-size:11px;font-weight:900;">4. OXÍGENO<br><span style="font-weight:700;font-size:9.5px;">O</span></div>
       </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 10</span>
-          <span class="orig">Ecuación inicial: <strong>Fe₂O₃ + C → Fe + CO₂</strong></span>
-        </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> El Oxígeno tiene subíndices 3 y 2 (m.c.m. = 6). Cruzamos: 2 al Fe₂O₃ y 3 al CO₂. <em>(O: 2 × 3 = 6 en reactivos  |  3 × 2 = 6 en productos)</em></li><li><strong>Paso 2:</strong> Ahora hay 2 × 2 = 4 Hierros en reactivos. Ponemos un 4 al Fe en productos. <em>(Productos: 4 × 1 = 4 átomos de Fe)</em></li><li><strong>Paso 3:</strong> Hay 3 Carbonos en productos. Ponemos un 3 al C en reactivos. <em>(Reactivos: 3 × 1 = 3 átomos de C)</em></li><li><strong>Paso 4:</strong> ¡Reducción del óxido de hierro completamente balanceada! <em>(Fe: 4 = 4  |  C: 3 = 3  |  O: 6 = 6)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>2Fe₂O₃ + 3C → 4Fe + 3CO₂</strong></div>
+      <div style="text-align:center;font-size:10.5px;color:#334155;margin-top:7px;font-weight:700;">
+        ⚖️ Ley de Conservación de la Masa: <em>Cantidad de átomos en Reactivos = Cantidad de átomos en Productos</em>
       </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 11</span>
-          <span class="orig">Ecuación inicial: <strong>P₄ + O₂ → P₂O₅</strong></span>
-        </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> Empezamos por el Fósforo (No Metal): hay 4 en reactivos y 2 en productos. Ponemos un 2 al P₂O₅. <em>(Productos: 2 × 2 = 4 P  |  2 × 5 = 10 O)</em></li><li><strong>Paso 2:</strong> Ahora tenemos 10 Oxígenos en productos y 2 en reactivos. Ponemos un 5 al O₂ (5 × 2 = 10). <em>(Reactivos: 5 × 2 = 10 átomos de O)</em></li><li><strong>Paso 3:</strong> ¡Síntesis del pentóxido de difósforo balanceada! <em>(P: 4 = 4  |  O: 10 = 10)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>P₄ + 5O₂ → 2P₂O₅</strong></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <span class="num">Ejercicio 12</span>
-          <span class="orig">Ecuación inicial: <strong>Al(OH)₃ + H₂SO₄ → Al₂(SO₄)₃ + H₂O</strong></span>
-        </div>
-        <ol class="steps"><li><strong>Paso 1:</strong> Paso 1 (Metal - Aluminio): hay 2 en productos. Ponemos un 2 delante de Al(OH)₃. <em>(Reactivos: 2 Al, 6 O y 6 H en Al(OH)₃)</em></li><li><strong>Paso 2:</strong> Paso 2 (No Metal - Azufre): hay 3 en productos. Ponemos un 3 delante de H₂SO₄. <em>(Reactivos: 3 S  |  H totales: 6 + 6 = 12 H)</em></li><li><strong>Paso 3:</strong> Paso 3 (Hidrógeno): tenemos 12 en reactivos. Ponemos un 6 al H₂O (6 × 2 = 12). <em>(Productos: 12 H  |  O totales: 12 + 6 = 18 O)</em></li><li><strong>Paso 4:</strong> ¡Reto final superado! Todos los elementos coinciden a la perfección. <em>(Al: 2 = 2  |  S: 3 = 3  |  H: 12 = 12  |  O: 18 = 18)</em></li></ol>
-        <div class="result">Respuesta balanceada: <strong>2Al(OH)₃ + 3H₂SO₄ → Al₂(SO₄)₃ + 6H₂O</strong></div>
-      </div>
-  </div>
+    </div>
+
+    ${cardsHtml}
+  `;
+
+  if (window.html2pdf) {
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: 'Quimica_3ro_Secundaria_Balanceo_Ecuaciones_Quimicas.pdf',
+      image: { type: 'jpeg', quality: 0.96 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    html2pdf().set(opt).from(container).save().then(() => {
+      btn.textContent = origText;
+      btn.disabled = false;
+    }).catch(() => {
+      btn.textContent = origText;
+      btn.disabled = false;
+      fallbackPrintPDF(container.innerHTML);
+    });
+  } else {
+    btn.textContent = origText;
+    btn.disabled = false;
+    fallbackPrintPDF(container.innerHTML);
+  }
+}
+
+function fallbackPrintPDF(innerHtml) {
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Química - 3º de Educación Secundaria - Balanceo de Ecuaciones Químicas</title></head><body style="margin:0;padding:15px;">${innerHtml}<script>window.onload=()=>window.print();<\/script></body></html>`);
+  win.document.close();
+}
+
+// Eventos generales
+$('btnGuided').onclick = () => { mode = 'guided'; $('btnGuided').classList.add('active'); $('btnPractice').classList.remove('active'); render(); };
+$('btnPractice').onclick = () => { mode = 'practice'; $('btnPractice').classList.add('active'); $('btnGuided').classList.remove('active'); render(); };
+$('nextStep').onclick = () => { revealed = Math.min(EXERCISES[currentEx].steps.length, revealed + 1); manualFocus = null; render(); };
+$('prevStep').onclick = () => { revealed = Math.max(0, revealed - 1); manualFocus = null; render(); };
+$('solveAll').onclick = () => { revealed = EXERCISES[currentEx].steps.length; manualFocus = null; render(); };
+$('restart').onclick = () => { revealed = 0; manualFocus = null; render(); };
+$('downloadBtn').onclick = downloadInstitutionalPDF;
+
+// ==========================================================
+// PIZARRA ACTIVA + RESALTADOR 20% OPACIDAD (DESVANECE EN 2s)
+// ==========================================================
+const ink = $('ink'), ctx = ink.getContext('2d');
+const laser = $('laser'), lctx = laser.getContext('2d');
+let tool = 'select', color = '#ef4444';
+let down = false, last = null, origin = null, snapshot = null, straightMode = false;
+let undo = [];
+let laserStrokes = [], activeLaserStroke = null, laserAnimId = null;
+
+function resizeCanvases() {
+  const old = document.createElement('canvas'); old.width = ink.width; old.height = ink.height;
+  if (old.width && old.height) old.getContext('2d').drawImage(ink, 0, 0);
+  ink.width = innerWidth * devicePixelRatio; ink.height = innerHeight * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  if (old.width && old.height) ctx.drawImage(old, 0, 0, old.width / devicePixelRatio, old.height / devicePixelRatio);
+
+  laser.width = innerWidth * devicePixelRatio; laser.height = innerHeight * devicePixelRatio;
+  lctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+}
+addEventListener('resize', resizeCanvases);
+resizeCanvases();
+
+function saveInk() {
+  undo.push(ctx.getImageData(0, 0, ink.width, ink.height));
+  if (undo.length > 16) undo.shift();
+}
+
+function setTool(t) {
+  tool = t;
+  document.body.classList.toggle('drawactive', t !== 'select');
+  document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === t));
+}
+document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
+document.querySelectorAll('[data-color]').forEach(b => b.onclick = () => {
+  color = b.dataset.color;
+  document.querySelectorAll('[data-color]').forEach(x => x.classList.toggle('sel', x === b));
+});
+
+$('clearInk').onclick = () => {
+  saveInk();
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  laserStrokes = [];
+  lctx.clearRect(0, 0, innerWidth, innerHeight);
+};
+$('undoInk').onclick = () => {
+  if (undo.length) ctx.putImageData(undo.pop(), 0, 0);
+};
+
+function point(ev) { return { x: ev.clientX, y: ev.clientY }; }
+
+function strokeSegment(from, to, style) {
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.lineWidth = style === 'erase' ? 34 : 4.8;
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = style === 'erase' ? 'destination-out' : 'source-over';
+  ctx.strokeStyle = color;
+  ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke();
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+// Resaltador grueso al 20% de opacidad (0.20) sin brillo, que se desvanece en 2 segundos
+function renderLaserLoop() {
+  const now = performance.now();
+  lctx.clearRect(0, 0, innerWidth, innerHeight);
+
+  laserStrokes = laserStrokes.filter(s => {
+    if (s.finishedAt === null) return true;
+    return (now - s.finishedAt) < 2000;
+  });
+
+  laserStrokes.forEach(s => {
+    if (s.points.length < 2) return;
+    let fade = 1;
+    if (s.finishedAt !== null) {
+      fade = Math.max(0, 1 - ((now - s.finishedAt) / 2000));
+    }
+
+    lctx.save();
+    lctx.lineCap = 'round';
+    lctx.lineJoin = 'round';
+    lctx.globalAlpha = 0.20 * fade; // Opacidad base exacta del 20%
+    lctx.strokeStyle = s.color;
+    lctx.lineWidth = 24; // Trazo grueso limpio, sin bordes brillantes
+    lctx.beginPath();
+    lctx.moveTo(s.points[0].x, s.points[0].y);
+    for (let i = 1; i < s.points.length; i++) lctx.lineTo(s.points[i].x, s.points[i].y);
+    lctx.stroke();
+    lctx.restore();
+  });
+
+  if (laserStrokes.length > 0) {
+    laserAnimId = requestAnimationFrame(renderLaserLoop);
+  } else {
+    laserAnimId = null;
+  }
+}
+
+ink.addEventListener('pointerdown', ev => {
+  if (tool === 'select' || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+  ev.preventDefault();
+  down = true;
+  origin = last = point(ev);
+  ink.setPointerCapture(ev.pointerId);
+
+  if (tool === 'marker') {
+    activeLaserStroke = { color, points: [origin], finishedAt: null };
+    laserStrokes.push(activeLaserStroke);
+    if (!laserAnimId) laserAnimId = requestAnimationFrame(renderLaserLoop);
+    return;
+  }
+
+  saveInk();
+  straightMode = tool === 'line' || (tool === 'pen' && ev.shiftKey);
+  snapshot = (tool === 'line' || tool === 'pen') ? ctx.getImageData(0, 0, ink.width, ink.height) : null;
+  if (tool === 'pen' && !straightMode) {
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(origin.x, origin.y, 2.5, 0, Math.PI * 2); ctx.fill();
+  }
+});
+
+ink.addEventListener('pointermove', ev => {
+  if (!down) return;
+  ev.preventDefault();
+  const p = point(ev);
+
+  if (tool === 'marker' && activeLaserStroke) {
+    activeLaserStroke.points.push(p);
+    return;
+  }
+
+  if (tool === 'pen' && ev.shiftKey) straightMode = true;
+  if (straightMode && snapshot) {
+    ctx.putImageData(snapshot, 0, 0);
+    strokeSegment(origin, p, tool);
+  } else {
+    strokeSegment(last, p, tool);
+    last = p;
+  }
+});
+
+function stopInk(ev) {
+  if (!down) return;
+  if (tool === 'marker' && activeLaserStroke) {
+    activeLaserStroke.finishedAt = performance.now();
+    activeLaserStroke = null;
+  } else if (straightMode && snapshot) {
+    ctx.putImageData(snapshot, 0, 0);
+    strokeSegment(origin, point(ev), tool);
+  }
+  down = false; straightMode = false; snapshot = null;
+  if (ink.hasPointerCapture(ev.pointerId)) ink.releasePointerCapture(ev.pointerId);
+}
+
+ink.addEventListener('pointerup', stopInk);
+ink.addEventListener('pointercancel', stopInk);
+
+addEventListener('keydown', ev => {
+  if (ev.key === 'Escape') setTool('select');
+  if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') { ev.preventDefault(); $('undoInk').click(); }
+  if (tool === 'select' && mode === 'guided' && ev.key === 'ArrowRight') $('nextStep').click();
+  if (tool === 'select' && mode === 'guided' && ev.key === 'ArrowLeft') $('prevStep').click();
+});
+
+function init() {
+  createFloaters();
+  setTool('select');
+  selectExercise(0);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
 </body>
 </html>
